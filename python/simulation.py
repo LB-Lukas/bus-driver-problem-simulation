@@ -85,7 +85,7 @@ def simulate_busdriver_game():
 
 # Main function to simulate the bus driver game multiple times
 if __name__ == "__main__":
-    num_games = 1000000
+    num_games = 1_000_000
     results = []
     
     with open("results.txt", "w") as outfile:
