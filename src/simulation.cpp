@@ -56,78 +56,75 @@ int simulate_busdriver_game(std::vector<Card>& deck, std::mt19937& rng) {
     pile.reserve(4);  // Pre-allocate space for the pile
     
     int num_drinks = 0;
+    int round_num = 1;
 
-    // Round 1: Red or Black?
     while (!deck.empty()) {
-        Card card = draw_card(deck);
-        pile.push_back(card);
-        std::string player_guess = (rng() % 2 == 0) ? "Red" : "Black";
-        std::string color_of_card = (card.first == "Hearts" || card.first == "Diamonds") ? "Red" : "Black";
-        
-        if (player_guess == color_of_card) {
-            break;
-        } else {
-            num_drinks++;
+        if (round_num == 1) {
+            Card card = draw_card(deck);
+            pile.push_back(card);
+            const std::vector<std::string> suits = {"Clubs", "Diamonds", "Hearts", "Spades"};
+            std::string player_guess = suits[rng() % 4];
+            std::string suit_of_card = card.first;
+
+            if (player_guess == suit_of_card) {
+                round_num++;
+            } else {
+                num_drinks++;
+                round_num = 1;
+            }
+
+        } else if (round_num == 2) {
+            Card card = draw_card(deck);
+            pile.push_back(card);
+            std::string player_guess = (rng() % 2 == 0) ? "Red" : "Black";
+            std::string color_of_card = (card.first == "Hearts" || card.first == "Diamonds") ? "Red" : "Black";
+
+            if (player_guess == color_of_card) {
+                round_num++;
+            } else {
+                num_drinks++;
+                round_num = 1;
+            }
+        } else if (round_num == 3) {
+            if (pile.size() < 2) {
+                return num_drinks;  // Safety check in case there are not enough cards for comparison
+            }
+            Card card = draw_card(deck);
+            pile.push_back(card);
+            std::string player_guess;
+            int random_value = rng() % 3;
+            player_guess = (random_value == 0) ? ">" : (random_value == 1) ? "<" : "="; 
+            
+            if ((card.second > pile[pile.size() - 2].second && player_guess == ">") ||
+                (card.second < pile[pile.size() - 2].second && player_guess == "<") ||
+                (card.second == pile[pile.size() - 2].second && player_guess == "=")) {
+                round_num++;
+            } else {
+                num_drinks++;
+                round_num = 1;
+            }
+        } else if (round_num == 4) {
+            if (pile.size() < 3) {
+                return num_drinks;  // Safety check in case there are not enough cards for comparison
+            }
+            Card card1 = pile[pile.size() - 3];
+            Card card2 = pile[pile.size() - 2];
+            int lower_bound = std::min(card1.second, card2.second);
+            int upper_bound = std::max(card1.second, card2.second);
+            Card card = draw_card(deck);
+            pile.push_back(card);
+            
+            std::string player_guess = (rng() % 2 == 0) ? "Inside" : "Outside";
+            
+            if ((card.second > lower_bound && card.second < upper_bound && player_guess == "Inside") ||
+                ((card.second < lower_bound || card.second > upper_bound) && player_guess == "Outside")) {
+                return num_drinks;
+            } else {
+                num_drinks++;
+                round_num = 1;
+            }
         }
     }
-
-    // Round 2: Which suit?
-    while (!deck.empty()) {
-        Card card = draw_card(deck);
-        pile.push_back(card);
-        const std::vector<std::string> suits = {"Clubs", "Diamonds", "Hearts", "Spades"};
-        std::string player_guess = suits[rng() % 4];
-        std::string suit_of_card = card.first;
-        
-        if (player_guess == suit_of_card) {
-            break;
-        } else {
-            num_drinks++;
-        }
-    }
-
-    // Round 3: Higher, Lower or Same?
-    if (pile.size() < 2) {
-        return num_drinks;  // Safety check in case there are not enough cards for comparison
-    }
-    while (!deck.empty()) {
-        Card card = draw_card(deck);
-        pile.push_back(card);
-        std::string player_guess;
-        int random_value = rng() % 3;
-        player_guess = (random_value == 0) ? ">" : (random_value == 1) ? "<" : "="; 
-        
-        if ((card.second > pile[pile.size() - 2].second && player_guess == ">") ||
-            (card.second < pile[pile.size() - 2].second && player_guess == "<") ||
-            (card.second == pile[pile.size() - 2].second && player_guess == "=")) {
-            break;
-        } else {
-            num_drinks++;
-        }
-    }
-
-    // Round 4: Inside or Outside?
-    if (pile.size() < 3) {
-        return num_drinks;  // Safety check for enough cards for comparison
-    }
-    while (!deck.empty()) {
-        Card card1 = pile[pile.size() - 3];
-        Card card2 = pile[pile.size() - 2];
-        int lower_bound = std::min(card1.second, card2.second);
-        int upper_bound = std::max(card1.second, card2.second);
-        Card card = draw_card(deck);
-        pile.push_back(card);
-        
-        std::string player_guess = (rng() % 2 == 0) ? "Inside" : "Outside";
-        
-        if ((card.second > lower_bound && card.second < upper_bound && player_guess == "Inside") ||
-            ((card.second < lower_bound || card.second > upper_bound) && player_guess == "Outside")) {
-            break;
-        } else {
-            num_drinks++;
-        }
-    }
-
     return num_drinks;
 }
 
